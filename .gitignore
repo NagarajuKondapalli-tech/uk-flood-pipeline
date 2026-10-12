@@ -1,0 +1,10 @@
+# Raw data is large and re-creatable, keep it out of git
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets
+.env
