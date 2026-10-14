@@ -31,6 +31,13 @@ DB_PATH = Path("data/flood.db")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("etl_load")
 
+# Environment Agency region names that can appear inside a measure ID.
+# If a new one shows up as a "parameter" in the data, add it here.
+REGIONS = {
+    "anglian", "thames", "southern", "north_west", "north_east",
+    "midlands", "south_west", "south_east", "wessex", "yorkshire",
+}
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS readings (
     measure_id   TEXT NOT NULL,   -- e.g. 3680-level-stage-i-15_min-m
@@ -63,7 +70,12 @@ def transform_item(item: dict):
     measure_id = str(measure_url).rsplit("/", 1)[-1]
     parts = measure_id.split("-")
     station_ref = parts[0]
-    parameter = parts[1] if len(parts) > 1 else "unknown"
+    # Bug found on 13 Oct: some IDs have an EA region name in second place,
+    # e.g. "E1901-anglian-level-stage-...". The real type is then the third part.
+    type_index = 1
+    if len(parts) > 2 and parts[1].lower() in REGIONS:
+        type_index = 2
+    parameter = parts[type_index] if len(parts) > type_index else "unknown"
 
     # Quirk: for some stations the API returns a LIST of values instead of one number.
     value = item.get("value")
