@@ -28,9 +28,9 @@ Orchestration: Prefect or Airflow, packaged with Docker
 
 ## Status
 
-- [x] Week 1: raw ingestion script (Extract)
-- [x] Week 2 (started): clean + load into SQLite (Transform + Load), starter SQL queries, Azure upload script
-- [ ] Week 2: collect data for a few days, answer the first SQL questions, move SQLite to Postgres
+- [x] Week 1: raw ingestion script (Extract), code on GitHub
+- [x] Week 2 (done so far): clean + load into SQLite (Transform + Load), automatic 15-minute collection on Windows (since 10 Oct 2026), first SQL checks, first data bug found and fixed
+- [ ] Week 2: collect more data, answer the first SQL questions, move SQLite to Postgres
 - [ ] Week 3: dbt models, data tests, failure handling
 - [ ] Week 4: Azure Blob storage, orchestrator
 - [ ] Week 5: PySpark job, Streamlit dashboard
@@ -70,10 +70,12 @@ for real data.
 ### Run every 15 minutes (until the orchestrator is built)
 
 - Mac/Linux: add `*/15 * * * * cd /path/to/project && .venv/bin/python ingest_flood.py` via `crontab -e`
-- Windows: Task Scheduler, repeat the task every 15 minutes
+- Windows: `run_pipeline.bat` runs both scripts in order. Register it with
+  `schtasks /create /tn "FloodPipeline" /sc minute /mo 15 /tr "C:\path\to\run_pipeline.bat"`
 
 Tip: your laptop must be awake for this to run. A free-tier cloud VM later
-avoids gaps.
+avoids gaps. By default a task created this way will not start on battery
+power (see "Problems I hit").
 
 ## Design decisions (fill in as I go)
 
@@ -90,10 +92,31 @@ avoids gaps.
 - **List-valued readings:** for some stations (tidal ones) the API returns a
   list of numbers in `value` instead of one number. The transform step takes
   the first value so the column stays numeric.
+- **Wrong measurement type for some stations (found 13 Oct):** a SQL count by
+  type showed values like `anglian`, `thames`, `north_west` and `southern`
+  where `level`, `rainfall` or `flow` should be. Some station IDs have an
+  Environment Agency region name in second place (for example
+  `E1901-anglian-level-stage-i-15_min-mASD`), and my code assumed the type was
+  always second. I fixed the parsing, then rebuilt the database from the raw
+  JSON files, which is only possible because the raw data is kept untouched.
+  A few readings (about 6 of 35,000) still carry an odd label (`T_TG_341`) and
+  are still to be investigated.
+- **Gaps in the data:** the laptop is switched off at night, and the Windows task
+  created with `schtasks` defaults to "No Start On Batteries", so runs were
+  skipped when unplugged. Nothing was collected between 7 and 10 Oct, before
+  the schedule existed. The API only returns the latest reading, so missed
+  runs cannot simply be re-fetched.
+- **Stations that stop reporting:** each fetch includes around 80 to 100
+  readings that are identical to ones already stored (stations that have not
+  updated). The primary key on (measure_id, reading_time) skips them, so no
+  duplicates are created.
 
 (Add one entry whenever something breaks: duplicates, rate limits, schema
 changes. These are your best interview stories.)
 
 ## What I'd improve next
 
-(Fill in at the end.)
+- Run the pipeline on an always-on cloud machine so there are no gaps
+- Add a backfill step to fill gaps (to be checked against the API documentation)
+- Look into the remaining odd `T_TG_341` rows
+- Add automated data quality tests
