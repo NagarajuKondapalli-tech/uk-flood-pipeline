@@ -1,0 +1,9 @@
+{
+  "items": [
+    {"@id": "a", "dateTime": "2026-10-06T12:00:00Z", "measure": "http://environment.data.gov.uk/flood-monitoring/id/measures/3680-level-stage-i-15_min-m", "value": 0.52},
+    {"@id": "b", "dateTime": "2026-10-06T12:00:00Z", "measure": "http://environment.data.gov.uk/flood-monitoring/id/measures/E7050-rainfall-tipping_bucket_raingauge-t-15_min-mm", "value": 0.2},
+    {"@id": "c", "dateTime": "2026-10-06T12:00:00Z", "measure": "http://environment.data.gov.uk/flood-monitoring/id/measures/0001-level-tidal_level-i-15_min-mAOD", "value": [1.31, 1.35]},
+    {"@id": "d", "dateTime": "2026-10-06T12:00:00Z", "measure": "http://environment.data.gov.uk/flood-monitoring/id/measures/4455-level-stage-i-15_min-m"},
+    {"@id": "e", "dateTime": "2026-10-06T12:00:00Z", "value": 3.0}
+  ]
+}
